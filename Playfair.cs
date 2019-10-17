@@ -20,19 +20,8 @@ namespace Ciphers
             { 'M', 'N', 'O', 'P', 'Q' } ,
             { 'T', 'U', 'V', 'W', 'X' } };
 
-        private static char[,] smallMatrix = new char[5, 5] {
-            { 's', 'z', 'y', 'f', 'r' } ,
-            { 'a', 'b', 'c', 'd', 'e' } ,
-            { 'g', 'h', 'i', 'k', 'l' } ,
-            { 'm', 'n', 'o', 'p', 'q' } ,
-            { 't', 'u', 'v', 'w', 'x' } };
-
-        //private static char[,] bigMatrix = new char[5, 5];
-        //private static char[,] smallMatrix = new char[5, 5];
-
         public string Encrypt(string input)
         {
-            //CreateLetterMatrix2("SZYFR");
             var otherChars = OtherCharsDictionary(ref input);
             FormatPlaintext(ref input);
             var letterPairs = CreateLetterPairs(ref input);
@@ -135,39 +124,6 @@ namespace Ciphers
             return matrix;
         }
 
-        //private static void CreateLetterMatrix2(string key)
-        //{
-        //    //if (key.Length != 5)
-        //    //{
-        //    //    return null;
-        //    //}
-
-        //    var smallKey = key.ToLower();
-        //    var bigKey = key.ToUpper();
-
-        //    var bigAlphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
-        //    var smallAlphabet = bigAlphabet.ToLower();
-
-        //    for (var i = 0; i < 5; i++)
-        //    {
-        //        smallAlphabet = smallAlphabet.Replace(key[i].ToString(), "");
-        //        bigAlphabet = bigAlphabet.Replace(key[i].ToString(), "");
-        //        smallMatrix[0, i] = smallKey[i];
-        //        bigMatrix[0, i] = bigKey[i];
-        //    }
-
-        //    for (var i = 1; i < 5; i++)
-        //    {
-        //        for (var j = 0; j < 5; j++)
-        //        {
-        //            smallMatrix[i, j] = smallAlphabet.First();
-        //            bigMatrix[i, j] = bigAlphabet.First();
-        //            smallAlphabet = smallAlphabet.Remove(0, 1);
-        //            bigAlphabet = bigAlphabet.Remove(0, 1);
-        //        }
-        //    }
-        //}
-
         private static char[,] ReverseLetterMatrix(char[,] matrix)
         {
             Stack stack = new Stack();
@@ -235,74 +191,12 @@ namespace Ciphers
             }
         }
 
-        private static void SwitchLetterPairs2(ref string[] letterPairs)
-        {
-            for (int i = 0; i < letterPairs.Length; i++)
-            {
-                var firstLetterPos = GetElementPosition(letterPairs[i][0], ref matrix);
-                var secondLetterPos = GetElementPosition(letterPairs[i][1], ref matrix);
-
-                if (CheckSameRow(firstLetterPos.y, secondLetterPos.y))
-                {
-                    var firstOffset = firstLetterPos.x + 1;
-                    var secondOffset = secondLetterPos.x + 1;
-                    if (firstLetterPos.x == (smallMatrix.GetLength(1) - 1))
-                    {
-                        firstOffset = 0;
-                    }
-                    else if (secondLetterPos.x == (smallMatrix.GetLength(1) - 1))
-                    {
-                        secondOffset = 0;
-                    }
-                    
-                    letterPairs[i] = string.Concat(
-                        matrix[firstLetterPos.y, firstOffset].ToString(),
-                        matrix[secondLetterPos.y, secondOffset].ToString());
-                }
-                else if (CheckSameColumn(firstLetterPos.x, secondLetterPos.x))
-                {
-                    var firstOffset = firstLetterPos.y + 1;
-                    var secondOffset = secondLetterPos.y + 1;
-                    if (firstLetterPos.y == (matrix.GetLength(1) - 1))
-                    {
-                        firstOffset = 0;
-                    }
-                    else if (secondLetterPos.y == (matrix.GetLength(1) - 1))
-                    {
-                        secondOffset = 0;
-                    }
-                    letterPairs[i] = string.Concat(
-                        matrix[firstOffset, firstLetterPos.x].ToString(),
-                        matrix[secondOffset, secondLetterPos.x].ToString());
-                }
-                else
-                {
-                    letterPairs[i] = string.Concat(
-                        matrix[firstLetterPos.y, secondLetterPos.x].ToString(),
-                        matrix[secondLetterPos.y, firstLetterPos.x].ToString());
-                }
-            }
-        }
-
         private static Position GetElementPosition(char letter, ref char[,] matrix)
         {
             for (int i = 0; i < 5; i++)
             {
                 for (int j = 0; j < 5; j++)
                 {
-                    //if (letter == 'j')
-                    //{
-                    //    letter = 'i';
-                    //}
-
-                    //if (letter == 'J')
-                    //{
-                    //    letter = 'I';
-                    //}
-                    //if (letter == smallMatrix[i, j] || letter == bigMatrix[i, j])
-                    //{
-                    //    return new Position(i, j);
-                    //}
                     if (letter == matrix[i, j])
                     {
                         return new Position(i, j);
@@ -312,31 +206,6 @@ namespace Ciphers
 
             return null;
         }
-
-        //private static Position GetElementPosition2(char letter)
-        //{
-        //    for (int i = 0; i < 5; i++)
-        //    {
-        //        for (int j = 0; j < 5; j++)
-        //        {
-        //            if (letter == 'j')
-        //            {
-        //                letter = 'i';
-        //            }
-
-        //            if (letter == 'J')
-        //            {
-        //                letter = 'I';
-        //            }
-        //            if (letter == smallMatrix[i, j] || letter == bigMatrix[i, j])
-        //            {
-        //                return new Position(i, j);
-        //            }
-        //        }
-        //    }
-
-        //    return null;
-        //}
 
         private static bool CheckSameColumn(int x1, int x2)
         {

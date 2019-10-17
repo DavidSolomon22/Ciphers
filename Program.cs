@@ -74,8 +74,6 @@ namespace Ciphers
                     Console.WriteLine("\nType in plaintext: ");
                     Console.Write("> ");
                     var plaintext = Console.ReadLine();
-                    //var text = playfair.ReadFile("text.txt");
-                    //var ciphertext = playfair.Encrypt(text);
                     var ciphertext = playfair.Encrypt(plaintext);
                     Console.WriteLine("\nCiphertext: " + ciphertext);
                     break;
