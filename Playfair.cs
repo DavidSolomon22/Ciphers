@@ -24,19 +24,6 @@ namespace Ciphers
             return otherChars == null ? concatLetterPairs : InsertOtherChars(ref concatLetterPairs, ref otherChars);
         }
 
-        public string Decrypt(string input, string key)
-        {
-            CreateLetterMatrix(key);
-            var otherChars = OtherCharsDictionary(ref input);
-            var letterPairs = CreateLetterPairs(ref input);
-            ReverseLetterMatrix();
-            SwitchLetterPairs(ref letterPairs, ref _reversedSmallMatrix, ref _reversedBigMatrix, true);
-            var formattedText = AggregateLetterPairs(ref letterPairs);
-            var unformattedText = formattedText.Replace("X", "");
-
-            return otherChars == null ? unformattedText : InsertOtherChars(ref unformattedText, ref otherChars);
-        }
-
         private static void CreateLetterMatrix(string key)
         {
             var smallKey = key.ToLower();
@@ -61,35 +48,6 @@ namespace Ciphers
                     _bigMatrix[i, j] = bigAlphabet.First();
                     smallAlphabet = smallAlphabet.Remove(0, 1);
                     bigAlphabet = bigAlphabet.Remove(0, 1);
-                }
-            }
-        }
-
-        private static void ReverseLetterMatrix()
-        {
-            Stack stack = new Stack();
-            foreach (var element in _smallMatrix)
-            {
-                stack.Push(element);
-            }
-            for (int i = 0; i < 5; i++)
-            {
-                for (int j = 0; j < 5; j++)
-                {
-                    _reversedSmallMatrix[i, j] = (char)stack.Pop();
-                }
-            }
-            stack.Clear();
-
-            foreach (var element in _bigMatrix)
-            {
-                stack.Push(element);
-            }
-            for (int i = 0; i < 5; i++)
-            {
-                for (int j = 0; j < 5; j++)
-                {
-                    _reversedBigMatrix[i, j] = (char)stack.Pop();
                 }
             }
         }
