@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace Ciphers
 {
@@ -150,6 +151,7 @@ namespace Ciphers
                             try
                             {
                                 var text = ReadFile(fileName);
+                                text = Regex.Replace(text, @"\t|\n|\r", " ");
                                 Console.WriteLine("\nPlaintext: " + text);
                                 var ciphertext = playfair.Encrypt(text, key);
                                 Console.WriteLine("\nCiphertext: " + ciphertext);

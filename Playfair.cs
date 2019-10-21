@@ -94,12 +94,11 @@ namespace Ciphers
             }
         }
 
-        private Dictionary<char, ArrayList> OtherCharsDictionary(ref string input)
+        private static Dictionary<char, ArrayList> OtherCharsDictionary(ref string input)
         {
             var dictionary = new Dictionary<char, ArrayList>();
             var array = new ArrayList();
-            if (!input.Contains(" ")) return null;
-
+            if (!input.Contains(" ")) return dictionary;
             for (int i = 0; i < input.Length; i++)
             {
                 if (input[i] == ' ')
