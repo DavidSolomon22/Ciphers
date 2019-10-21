@@ -1,66 +1,115 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 using Ciphers.Extensions;
 
 namespace Ciphers
 {
-    class Playfair
+    internal class Playfair
     {
-        private static char[,] matrix = new char[5, 5] {
-            { 'S', 'Z', 'Y', 'F', 'R' } ,
-            { 'A', 'B', 'C', 'D', 'E' } ,
-            { 'G', 'H', 'I', 'K', 'L' } ,
-            { 'M', 'N', 'O', 'P', 'Q' } ,
-            { 'T', 'U', 'V', 'W', 'X' } };
+        private static char[,] _bigMatrix = new char[5, 5];
+        private static char[,] _smallMatrix = new char[5, 5];
+        private static char[,] _reversedBigMatrix = new char[5, 5];
+        private static char[,] _reversedSmallMatrix = new char[5, 5];
 
-        public string Encrypt(string input)
+        public string Encrypt(string input, string key)
         {
+            CreateLetterMatrix(key);
             var otherChars = OtherCharsDictionary(ref input);
             FormatPlaintext(ref input);
             var letterPairs = CreateLetterPairs(ref input);
-            var matrix = CreateLetterMatrix();
-            SwitchLetterPairs(ref letterPairs, ref matrix);
-            var concatLetterPairs = ConcatLetterPairs(ref letterPairs);
+            SwitchLetterPairs(ref letterPairs, ref _smallMatrix, ref _bigMatrix, false);
+            var concatLetterPairs = AggregateLetterPairs(ref letterPairs);
 
             return otherChars == null ? concatLetterPairs : InsertOtherChars(ref concatLetterPairs, ref otherChars);
         }
 
-        public string Decrypt(string input)
+        public string Decrypt(string input, string key)
         {
+            CreateLetterMatrix(key);
             var otherChars = OtherCharsDictionary(ref input);
             var letterPairs = CreateLetterPairs(ref input);
-            var matrix = ReverseLetterMatrix(CreateLetterMatrix());
-            SwitchLetterPairs(ref letterPairs, ref matrix);
-            var formattedText = ConcatLetterPairs(ref letterPairs);
+            ReverseLetterMatrix();
+            SwitchLetterPairs(ref letterPairs, ref _reversedSmallMatrix, ref _reversedBigMatrix, true);
+            var formattedText = AggregateLetterPairs(ref letterPairs);
             var unformattedText = formattedText.Replace("X", "");
 
             return otherChars == null ? unformattedText : InsertOtherChars(ref unformattedText, ref otherChars);
         }
 
-        public string ReadFile(string path)
+        private static void CreateLetterMatrix(string key)
         {
-            try
+            var smallKey = key.ToLower();
+            var bigKey = key.ToUpper();
+
+            var bigAlphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
+            var smallAlphabet = bigAlphabet.ToLower();
+
+            for (var i = 0; i < 5; i++)
             {
-                using (StreamReader streamReader = new StreamReader(path))
-                {
-                    String text = streamReader.ReadToEnd();
-                    Console.WriteLine(text);
-                    return text;
-                }
-            }
-            catch (IOException ex)
-            {
-                Console.WriteLine("The file could not be read");
-                return ex.Message;
+                smallAlphabet = smallAlphabet.Replace(smallKey[i].ToString(), "");
+                bigAlphabet = bigAlphabet.Replace(bigKey[i].ToString(), "");
+                _smallMatrix[0, i] = smallKey[i];
+                _bigMatrix[0, i] = bigKey[i];
             }
 
+            for (var i = 1; i < 5; i++)
+            {
+                for (var j = 0; j < 5; j++)
+                {
+                    _smallMatrix[i, j] = smallAlphabet.First();
+                    _bigMatrix[i, j] = bigAlphabet.First();
+                    smallAlphabet = smallAlphabet.Remove(0, 1);
+                    bigAlphabet = bigAlphabet.Remove(0, 1);
+                }
+            }
+        }
+
+        private static void ReverseLetterMatrix()
+        {
+            Stack stack = new Stack();
+            foreach (var element in _smallMatrix)
+            {
+                stack.Push(element);
+            }
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    _reversedSmallMatrix[i, j] = (char)stack.Pop();
+                }
+            }
+            stack.Clear();
+
+            foreach (var element in _bigMatrix)
+            {
+                stack.Push(element);
+            }
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    _reversedBigMatrix[i, j] = (char)stack.Pop();
+                }
+            }
+        }
+
+        private Dictionary<char, ArrayList> OtherCharsDictionary(ref string input)
+        {
+            var dictionary = new Dictionary<char, ArrayList>();
+            var array = new ArrayList();
+            if (!input.Contains(" ")) return null;
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (input[i] == ' ')
+                {
+                    array.Add(i);
+                }
+            }
+            dictionary.Add(' ', array);
+
+            return dictionary;
         }
 
         private static void FormatPlaintext(ref string input)
@@ -105,101 +154,131 @@ namespace Ciphers
             return letterPairs;
         }
 
-        private static char[,] CreateLetterMatrix()
+        private static void SwitchLetterPairs(ref string[] letterPairs, ref char[,] smallMatrix, ref char[,] bigMatrix, bool isReversed)
         {
-            //char[,] matrix = new char[5, 5] {
-            //    { 'K', 'A', 'R', 'O', 'L' } ,
-            //    { 'M', 'N', 'P', 'Q', 'S' } ,
-            //    { 'T', 'U', 'V', 'W', 'X' } ,
-            //    { 'Y', 'Z', 'B', 'C', 'D' } ,
-            //    { 'E', 'F', 'G', 'H', 'I' } };
-
-            char[,] matrix = new char[5, 5] {
-                { 'S', 'Z', 'Y', 'F', 'R' } ,
-                { 'A', 'B', 'C', 'D', 'E' } ,
-                { 'G', 'H', 'I', 'K', 'L' } ,
-                { 'M', 'N', 'O', 'P', 'Q' } ,
-                { 'T', 'U', 'V', 'W', 'X' } };
-
-            return matrix;
-        }
-
-        private static char[,] ReverseLetterMatrix(char[,] matrix)
-        {
-            Stack stack = new Stack();
-            foreach (var element in matrix)
+            for (var i = 0; i < letterPairs.Length; i++)
             {
-                stack.Push(element);
-            }
+                var firstLetterPos = GetElementPosition(letterPairs[i][0], isReversed);
+                var secondLetterPos = GetElementPosition(letterPairs[i][1], isReversed);
 
-            for (int i = 0; i < 5; i++)
-            {
-                for (int j = 0; j < 5; j++)
+                var firstLetterSize = char.IsUpper(letterPairs[i][0]);
+                var secondLetterSize = char.IsUpper(letterPairs[i][1]);
+
+                if (CheckSameRow(firstLetterPos.Y, secondLetterPos.Y))
                 {
-                    matrix[i, j] = (char)stack.Pop();
-                }
-            }
-
-            return matrix;
-        }
-
-        private static void SwitchLetterPairs(ref string[] letterPairs, ref char[,] matrix)
-        {
-            for (int i = 0; i < letterPairs.Length; i++)
-            {
-                var firstLetterPos = GetElementPosition(letterPairs[i][0], ref matrix);
-                var secondLetterPos = GetElementPosition(letterPairs[i][1], ref matrix);
-
-                if (CheckSameRow(firstLetterPos.y, secondLetterPos.y))
-                {
-                    var firstOffset = firstLetterPos.x + 1;
-                    var secondOffset = secondLetterPos.x + 1;
-                    if (firstLetterPos.x == (matrix.GetLength(1) - 1))
+                    var firstOffset = firstLetterPos.X + 1;
+                    var secondOffset = secondLetterPos.X + 1;
+                    if (firstLetterPos.X == 4)
                     {
                         firstOffset = 0;
                     }
-                    else if (secondLetterPos.x == (matrix.GetLength(1) - 1))
+                    else if (secondLetterPos.X == 4)
                     {
                         secondOffset = 0;
                     }
-                    letterPairs[i] = string.Concat(
-                        matrix[firstLetterPos.y, firstOffset].ToString(),
-                        matrix[secondLetterPos.y, secondOffset].ToString());
+
+                    if (firstLetterSize && secondLetterSize)
+                    {
+                        letterPairs[i] = string.Concat(bigMatrix[firstLetterPos.Y, firstOffset].ToString(), bigMatrix[secondLetterPos.Y, secondOffset].ToString());
+                    }
+                    else if (firstLetterSize && !secondLetterSize)
+                    {
+                        letterPairs[i] = string.Concat(bigMatrix[firstLetterPos.Y, firstOffset].ToString(), smallMatrix[secondLetterPos.Y, secondOffset].ToString());
+                    }
+                    else if (!firstLetterSize && secondLetterSize)
+                    {
+                        letterPairs[i] = string.Concat(smallMatrix[firstLetterPos.Y, firstOffset].ToString(), bigMatrix[secondLetterPos.Y, secondOffset].ToString());
+                    }
+                    else
+                    {
+                        letterPairs[i] = string.Concat(smallMatrix[firstLetterPos.Y, firstOffset].ToString(), smallMatrix[secondLetterPos.Y, secondOffset].ToString());
+                    }
                 }
-                else if (CheckSameColumn(firstLetterPos.x, secondLetterPos.x))
+                else if (CheckSameColumn(firstLetterPos.X, secondLetterPos.X))
                 {
-                    var firstOffset = firstLetterPos.y + 1;
-                    var secondOffset = secondLetterPos.y + 1;
-                    if (firstLetterPos.y == (matrix.GetLength(1) - 1))
+                    var firstOffset = firstLetterPos.Y + 1;
+                    var secondOffset = secondLetterPos.Y + 1;
+                    if (firstLetterPos.Y == 4)
                     {
                         firstOffset = 0;
                     }
-                    else if (secondLetterPos.y == (matrix.GetLength(1) - 1))
+                    else if (secondLetterPos.Y == 4)
                     {
                         secondOffset = 0;
                     }
-                    letterPairs[i] = string.Concat(
-                        matrix[firstOffset, firstLetterPos.x].ToString(),
-                        matrix[secondOffset, secondLetterPos.x].ToString());
+
+                    if (firstLetterSize && secondLetterSize)
+                    {
+                        letterPairs[i] = string.Concat(bigMatrix[firstOffset, firstLetterPos.X].ToString(), bigMatrix[secondOffset, secondLetterPos.X].ToString());
+                    }
+                    else if (firstLetterSize && !secondLetterSize)
+                    {
+                        letterPairs[i] = string.Concat(bigMatrix[firstOffset, firstLetterPos.X].ToString(), smallMatrix[secondOffset, secondLetterPos.X].ToString());
+                    }
+                    else if (!firstLetterSize && secondLetterSize)
+                    {
+                        letterPairs[i] = string.Concat(smallMatrix[firstOffset, firstLetterPos.X].ToString(), bigMatrix[secondOffset, secondLetterPos.X].ToString());
+                    }
+                    else
+                    {
+                        letterPairs[i] = string.Concat(smallMatrix[firstOffset, firstLetterPos.X].ToString(), smallMatrix[secondOffset, secondLetterPos.X].ToString());
+                    }
                 }
                 else
                 {
-                    letterPairs[i] = string.Concat(
-                        matrix[firstLetterPos.y, secondLetterPos.x].ToString(),
-                        matrix[secondLetterPos.y, firstLetterPos.x].ToString());
+                    if (firstLetterSize && secondLetterSize)
+                    {
+                        letterPairs[i] = string.Concat(bigMatrix[firstLetterPos.Y, secondLetterPos.X].ToString(), bigMatrix[secondLetterPos.Y, firstLetterPos.X].ToString());
+                    }
+                    else if (firstLetterSize && !secondLetterSize)
+                    {
+                        letterPairs[i] = string.Concat(bigMatrix[firstLetterPos.Y, secondLetterPos.X].ToString(), smallMatrix[secondLetterPos.Y, firstLetterPos.X].ToString());
+                    }
+                    else if (!firstLetterSize && secondLetterSize)
+                    {
+                        letterPairs[i] = string.Concat(smallMatrix[firstLetterPos.Y, secondLetterPos.X].ToString(), bigMatrix[secondLetterPos.Y, firstLetterPos.X].ToString());
+                    }
+                    else
+                    {
+                        letterPairs[i] = string.Concat(smallMatrix[firstLetterPos.Y, secondLetterPos.X].ToString(), smallMatrix[secondLetterPos.Y, firstLetterPos.X].ToString());
+                    }
                 }
             }
         }
 
-        private static Position GetElementPosition(char letter, ref char[,] matrix)
+        private static string AggregateLetterPairs(ref string[] letterPairs)
+        {
+            return letterPairs.Aggregate("", string.Concat);
+        }
+
+        private static Position GetElementPosition(char letter, bool isReversed)
         {
             for (int i = 0; i < 5; i++)
             {
                 for (int j = 0; j < 5; j++)
                 {
-                    if (letter == matrix[i, j])
+                    if (letter == 'j')
                     {
-                        return new Position(i, j);
+                        letter = 'i';
+                    }
+                    else if (letter == 'J')
+                    {
+                        letter = 'I';
+                    }
+
+                    if (isReversed)
+                    {
+                        if (letter == _reversedSmallMatrix[i, j] || letter == _reversedBigMatrix[i, j])
+                        {
+                            return new Position(i, j);
+                        }
+                    }
+                    else
+                    {
+                        if (letter == _smallMatrix[i, j] || letter == _bigMatrix[i, j])
+                        {
+                            return new Position(i, j);
+                        }
                     }
                 }
             }
@@ -215,29 +294,6 @@ namespace Ciphers
         private static bool CheckSameRow(int y1, int y2)
         {
             return y1 == y2;
-        }
-
-        private Dictionary<char, ArrayList> OtherCharsDictionary(ref string input)
-        {
-            var dictionary = new Dictionary<char, ArrayList>();
-            var array = new ArrayList();
-            if (!input.Contains(" ")) return null;
-
-            for (int i = 0; i < input.Length; i++)
-            {
-                if (input[i] == ' ')
-                {
-                    array.Add(i);
-                }
-            }
-            dictionary.Add(' ', array);
-
-            return dictionary;
-        }
-
-        private static string ConcatLetterPairs(ref string[] letterPairs)
-        {
-            return letterPairs.Aggregate("", string.Concat);
         }
 
         private static string InsertOtherChars(ref string input, ref Dictionary<char, ArrayList> otherChars)
