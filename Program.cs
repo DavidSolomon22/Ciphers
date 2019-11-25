@@ -26,8 +26,9 @@ namespace Ciphers
             {
                 Console.WriteLine("\n\n--------------- Choose which cipher you want to use ---------------\n");
                 Console.WriteLine("1. Playfair");
+                Console.WriteLine("2. RSA");
                 Console.Write("> ");
-                string cipher = Console.ReadLine()?.Replace(" ", "").ToUpper();
+                var cipher = Console.ReadLine()?.Replace(" ", "").ToUpper();
 
                 switch (cipher)
                 {
@@ -45,6 +46,18 @@ namespace Ciphers
                         {
                             Console.WriteLine(e.Message);
                         }
+                        break;
+
+                    case "2":
+                    case "RSA":
+
+                        var rsa = new RSA();
+
+                        var encrypted = rsa.Encrypt("David Solomon");
+                        var decrypted = rsa.Decrypt(encrypted);
+                        Console.WriteLine(encrypted);
+                        Console.WriteLine(decrypted);
+
                         break;
                     default:
                         Console.WriteLine("\nERROR: INVALID SELECTION. PLEASE SELECT NUMBER OR NAME OF CIPHER.");
